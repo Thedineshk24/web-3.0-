@@ -16,11 +16,27 @@ const getEthereumContract = () => {
     singer
   );
 
-  console.log({ provider, singer, transactionContract });
+  return transactionContract;
 };
 
 export const TransactionProvider = ({ children }) => {
-const [connectedAccount, setConnectAccount] = useState([]);
+  const [connectedAccount, setConnectAccount] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [transactionCount, setTransactionCount] = useState(localStorage.getItem('transactionCount'));
+
+  const [formData, setFormData] = useState({
+    addressTo: "",
+    amount: "",
+    keyword: "",
+    message: "",
+  });
+
+  const handleChange = (e, name) => {
+    setFormData((prevState) => ({
+      ...prevState,
+      [name]: e.target.value,
+    }));
+  };
 
   const checkIfWalletConnected = async () => {
     if (!ethereum) {
@@ -29,7 +45,7 @@ const [connectedAccount, setConnectAccount] = useState([]);
 
     const accounts = await ethereum.request({ method: "eth_accounts" });
 
-    console.log( accounts );
+    console.log(accounts);
   };
 
   const connectWallet = async () => {
@@ -38,11 +54,56 @@ const [connectedAccount, setConnectAccount] = useState([]);
         return alert("Please connect install MetaMask");
       }
       const account = await ethereum.request({ method: "eth_requestAccounts" });
-      if(connectedAccount.length === 0) {
-          alert("You're already Connected to wallet");
+      if (connectedAccount.length === 0) {
+        alert("You're already Connected to wallet");
       }
       if (account.length > 0) {
         setConnectAccount(account[0]);
+      }
+    } catch (e) {
+      console.error(e.message);
+      throw new Error(e.message);
+    }
+  };
+
+  const sendTransaction = async () => {
+    try {
+      if (!ethereum) {
+        return alert("Plese connect or install MetaMask");
+      }
+      const { addressTo, amount, keyword, message } = formData;
+      const transactionContract = getEthereumContract();
+
+      const parsedAmount = ethers.utils.parseEther(amount);
+
+      await ethereum.request({
+        method: "eth_sendTransaction",
+        params: [
+          {
+            from: connectedAccount,
+            to: addressTo,
+            gas: "0x5208",
+            value: parsedAmount._hex,
+          },
+        ],
+      });
+
+      setIsLoading(true);
+      const transactionHash = await transactionContract.addToBlockchain(
+        addressTo,
+        parsedAmount,
+        message,
+        keyword
+      );
+
+      await transactionHash.wait();
+
+      if (transactionHash) {
+        setIsLoading(false);
+        console.info("Transaction Successful");
+        const transactionCount = await transactionContract.getTranscationCount();
+        setTransactionCount(transactionCount.toNumber());
+        // localStorage.setItem
       }
     } catch (e) {
       console.error(e.message);
@@ -54,7 +115,16 @@ const [connectedAccount, setConnectAccount] = useState([]);
     checkIfWalletConnected();
   }, []);
   return (
-    <TransactionContext.Provider value={{ connectWallet }}>
+    <TransactionContext.Provider
+      value={{
+        connectWallet,
+        formData,
+        connectedAccount,
+        handleChange,
+        sendTransaction,
+        isLoading
+      }}
+    >
       {children}
     </TransactionContext.Provider>
   );
