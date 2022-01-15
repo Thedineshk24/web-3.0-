@@ -59,6 +59,7 @@ export const TransactionProvider = ({ children }) => {
       }
       if (account.length > 0) {
         setConnectAccount(account[0]);
+        localStorage.setItem('connectedAccount', account[0]);
       }
     } catch (e) {
       console.error(e.message);
@@ -122,7 +123,8 @@ export const TransactionProvider = ({ children }) => {
         connectedAccount,
         handleChange,
         sendTransaction,
-        isLoading
+        isLoading,
+        setConnectAccount
       }}
     >
       {children}

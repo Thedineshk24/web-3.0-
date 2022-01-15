@@ -26,7 +26,9 @@ const Welcome = () => {
     formData,
     handleChange,
     sendTransaction,
-    isLoading
+    isLoading,
+    connectedAccount,
+    setConnectAccount,
   } = useContext(TransactionContext);
   const handleSubmit = (e) => {
     const { addressTo, amount, keyword, message } = formData;
@@ -50,13 +52,28 @@ const Welcome = () => {
             Explore the Crypto world. Buy and sell cryptocurrencies easily only
             on the <b className="text-gradient text-2xl">Krypto.</b>
           </p>
-          <button
-            type="button"
-            onClick={connectWallet}
-            className="flex flex-row justify-center items-center my-5 bg-[#2952e3] p-3 rounded-full cursor-pointer hover:bg-[#2546bd] text-white text-base font-semibold"
-          >
-            Connect to the wallet
-          </button>
+          {connectedAccount.length ||
+          localStorage.getItem("connectedAccount") > 0 ? (
+            <button
+              type="button"
+              onClick={() => {
+                setConnectAccount([]);
+                localStorage.clear();
+              }}
+              style={{ backgroundColor: "#E21717" }}
+              className="flex flex-row justify-center items-center my-5 p-3 rounded-full cursor-pointer hover:bg-[#2546bd] text-white text-base font-semibold"
+            >
+              Logout from Wallet
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={connectWallet}
+              className="flex flex-row justify-center items-center my-5 bg-[#2952e3] p-3 rounded-full cursor-pointer hover:bg-[#2546bd] text-white text-base font-semibold"
+            >
+              Connect to the wallet
+            </button>
+          )}
           <div className="grid sm:grid-cols-3 grid-cols-2 w-full mt-10">
             <div className={`rounded-tl-2xl ${commonStyles}`}>Reliability</div>
             <div className={`${commonStyles}`}>Security</div>
