@@ -22,7 +22,10 @@ const getEthereumContract = () => {
 export const TransactionProvider = ({ children }) => {
   const [connectedAccount, setConnectAccount] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [transactionCount, setTransactionCount] = useState(localStorage.getItem('transactionCount'));
+  const [transactionCount, setTransactionCount] = useState(
+    localStorage.getItem("transactionCount")
+  );
+  const [transactions, setTransactions] = useState([]);
 
   const [formData, setFormData] = useState({
     addressTo: "",
@@ -38,14 +41,51 @@ export const TransactionProvider = ({ children }) => {
     }));
   };
 
+  const getAllTransactions = async () => {
+    try {
+      if (!ethereum) {
+        return alert("Please connect install MetaMask");
+      }
+      const transactionContract = getEthereumContract();
+
+      const avaliableTransactions =
+        await transactionContract.getAllTransactions();
+
+      const structredTransactions = avaliableTransactions.map(
+        (transaction) => ({
+          addressTo: transaction.receiver,
+          addressFrom: transaction.sender,
+          timestamp: new Date(
+            transaction.timestamp.toNumber() * 1000
+          ).toLocaleString(),
+          message: transaction.message,
+          keyword: transaction.keyword,
+          amount: parseInt(transaction.amount._hex) / (10 ** 18),
+        })
+      );
+
+      setTransactions(structredTransactions);
+    } catch (e) {
+      throw new Error(e);
+    }
+  };
+
   const checkIfWalletConnected = async () => {
     if (!ethereum) {
       return alert("Please connect install MetaMask");
     }
-
     const accounts = await ethereum.request({ method: "eth_accounts" });
+    getAllTransactions();
+  };
 
-    console.log(accounts);
+  const checkIfTransactionExists = async () => {
+    try {
+      const transactionContract = getEthereumContract();
+      const transactionCount = await transactionContract.getTranscationCount();
+      localStorage.setItem("transactionCount", transactionCount);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const connectWallet = async () => {
@@ -59,7 +99,7 @@ export const TransactionProvider = ({ children }) => {
       }
       if (account.length > 0) {
         setConnectAccount(account[0]);
-        localStorage.setItem('connectedAccount', account[0]);
+        localStorage.setItem("connectedAccount", account[0]);
       }
     } catch (e) {
       console.error(e.message);
@@ -102,7 +142,8 @@ export const TransactionProvider = ({ children }) => {
       if (transactionHash) {
         setIsLoading(false);
         console.info("Transaction Successful");
-        const transactionCount = await transactionContract.getTranscationCount();
+        const transactionCount =
+          await transactionContract.getTranscationCount();
         setTransactionCount(transactionCount.toNumber());
         // localStorage.setItem
       }
@@ -114,6 +155,7 @@ export const TransactionProvider = ({ children }) => {
 
   useEffect(() => {
     checkIfWalletConnected();
+    checkIfTransactionExists();
   }, []);
   return (
     <TransactionContext.Provider
@@ -124,7 +166,8 @@ export const TransactionProvider = ({ children }) => {
         handleChange,
         sendTransaction,
         isLoading,
-        setConnectAccount
+        setConnectAccount,
+        transactions,
       }}
     >
       {children}

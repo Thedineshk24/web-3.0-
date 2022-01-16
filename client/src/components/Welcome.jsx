@@ -5,6 +5,7 @@ import { BsInfoCircle } from "react-icons/bs";
 import { Loader } from "../components/index";
 import { TransactionContext } from "../context/TransactionContext";
 import { useContext } from "react";
+import { shortenAddress } from "../utils/shortenAddress";
 
 const commonStyles =
   "min-h-[70px] sm:px-0 px-2 sm:min-w-[120px] flex justify-center items-center border-[0.5px] border-gray-400 text-sm font-light text-white";
@@ -54,17 +55,7 @@ const Welcome = () => {
           </p>
           {connectedAccount.length ||
           localStorage.getItem("connectedAccount") > 0 ? (
-            <button
-              type="button"
-              onClick={() => {
-                setConnectAccount([]);
-                localStorage.clear();
-              }}
-              style={{ backgroundColor: "#E21717" }}
-              className="flex flex-row justify-center items-center my-5 p-3 rounded-full cursor-pointer hover:bg-[#2546bd] text-white text-base font-semibold"
-            >
-              Logout from Wallet
-            </button>
+           ""
           ) : (
             <button
               type="button"
@@ -93,8 +84,8 @@ const Welcome = () => {
                 <BsInfoCircle fontSize={17} color="#fff" />
               </div>
               <div>
-                <p className="text-white font-light text-sm">
-                  <b className="text-white">Address</b> : 0xbhawee21042490s
+                <p className="text-white font-light text-xs">
+                  {connectedAccount && shortenAddress(connectedAccount)}
                 </p>
                 <p className="text-white font-semibold text-lg mt-1">
                   Ethereum
